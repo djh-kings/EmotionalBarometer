@@ -216,12 +216,15 @@
       paths.push(path);
 
       var lp = pt(a, 162);
+      // Keep labels upright: on the lower half of the wheel, flip them 180°
+      // so the text reads normally instead of appearing upside-down.
+      var rot = (a > 90 && a < 270) ? a + 90 : a - 90;
       var label = document.createElement('div');
       label.className = 'seg-label';
       label.textContent = it.n;
       label.style.left = (lp[0] / 600 * 100).toFixed(3) + '%';
       label.style.top  = (lp[1] / 600 * 100).toFixed(3) + '%';
-      label.style.transform = 'translate(-50%,-50%) rotate(' + (a - 90).toFixed(1) + 'deg)';
+      label.style.transform = 'translate(-50%,-50%) rotate(' + rot.toFixed(1) + 'deg)';
       label.style.color = lum(it.c) < 0.56 ? '#f6f4ef' : '#34383c';
       labelsEl.appendChild(label);
     });
