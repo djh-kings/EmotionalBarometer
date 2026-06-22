@@ -86,6 +86,31 @@
   .card__desc{font-family:'Spectral',Georgia,serif;font-size:18.5px;line-height:1.62;color:#4c5258;margin:0;text-wrap:pretty;}
   .card__spacer{flex:1;}
   .card__counter{font-family:'Space Mono',monospace;font-size:10.5px;letter-spacing:.26em;color:#aeb1ac;margin-top:28px;}
+
+  /* MOBILE — tighten everything so the wheel and SPIN button fit on screen */
+  @media (max-width:640px){
+    body{padding:20px 12px;gap:20px;}
+
+    .box{padding:24px 18px 22px;}
+    .box__title{font-size:30px;}
+    .box__subtitle{margin-top:11px;font-size:11px;letter-spacing:.28em;}
+
+    /* keep the wheel a square that scales with width (height no longer fixed) */
+    .wheel-wrap{margin:20px 0 12px;}
+    .stage{width:72vw;height:72vw;max-width:360px;max-height:360px;}
+    .hub{width:27vw;height:27vw;max-width:118px;max-height:118px;}
+
+    .hint{margin-bottom:12px;}
+    .box__footer{font-size:11px;letter-spacing:.26em;}
+    .spin-wrap{margin-top:18px;}
+
+    /* let the card size to its content instead of a tall fixed minimum */
+    .card{min-height:0;}
+    .card__band{height:72px;}
+    .card__body{padding:22px 24px 28px;}
+    .card__name{font-size:38px;}
+    .card__desc{font-size:17px;}
+  }
 </style>
 </head>
 <body>
