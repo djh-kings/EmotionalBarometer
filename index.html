@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Emotional Barometer · A tool to explain our moods</title>
+<meta name="description" content="An interactive Emotional Barometer — spin the wheel of twenty moods to better understand our inner emotional weather.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Space+Mono:wght@400;700&family=Spectral:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box;}
+  html,body{margin:0;}
+  ::selection{background:#cdcabf;}
+
+  :root{ --paper:#f4f2ee; }
+
+  body{
+    min-height:100vh;width:100%;
+    background:#e7e5df;
+    display:flex;align-items:center;justify-content:center;flex-wrap:wrap;
+    gap:44px;padding:56px 40px;
+    font-family:'Oswald',sans-serif;
+  }
+
+  /* THE BOX */
+  .box{
+    width:560px;max-width:92vw;
+    background:var(--paper);border-radius:5px;padding:50px 44px 40px;
+    box-shadow:0 1px 0 rgba(255,255,255,.7) inset,0 18px 44px -22px rgba(40,44,48,.45),0 2px 6px rgba(40,44,48,.12);
+  }
+  .box__title{text-align:center;font-weight:700;font-size:42px;letter-spacing:.02em;color:#3a4148;line-height:1;}
+  .box__subtitle{text-align:center;font-family:'Space Mono',monospace;font-size:13px;letter-spacing:.34em;color:#8a8f8e;margin-top:18px;line-height:1.9;}
+
+  .wheel-wrap{display:flex;justify-content:center;margin:34px 0 18px;}
+  .stage{position:relative;width:430px;height:430px;max-width:78vw;touch-action:none;user-select:none;cursor:grab;}
+  .stage.dragging{cursor:grabbing;}
+
+  .pointer{
+    position:absolute;top:-7px;left:50%;transform:translateX(-50%);
+    width:0;height:0;border-left:15px solid transparent;border-right:15px solid transparent;border-top:27px solid #565b60;
+    z-index:6;filter:drop-shadow(0 2px 2px rgba(40,44,48,.3));
+  }
+  .rotor{position:absolute;inset:0;will-change:transform;}
+  .rotor svg{width:100%;height:100%;display:block;overflow:visible;}
+  .seg-label{
+    position:absolute;transform-origin:center;
+    color:#34383c;font-family:'Oswald',sans-serif;font-weight:600;font-size:12.5px;
+    letter-spacing:.05em;white-space:nowrap;pointer-events:none;
+  }
+
+  .hub{
+    position:absolute;left:50%;top:50%;width:118px;height:118px;transform:translate(-50%,-50%);
+    border-radius:50%;background:var(--paper);
+    box-shadow:0 3px 10px rgba(40,44,48,.22),0 0 0 1px rgba(40,44,48,.05);
+    z-index:5;display:flex;align-items:center;justify-content:center;
+  }
+  .hub__pin{
+    width:38px;height:38px;border-radius:50%;
+    background:radial-gradient(circle at 36% 30%,#fdfdfd,#cdd1d2 38%,#8d9395 72%,#666b6d);
+    box-shadow:0 1px 3px rgba(40,44,48,.4),inset 0 -2px 3px rgba(0,0,0,.25);
+  }
+
+  .hint{text-align:center;font-family:'Space Mono',monospace;font-size:11px;letter-spacing:.28em;color:#a7aaa6;margin-bottom:18px;}
+  .box__footer{text-align:center;font-family:'Space Mono',monospace;font-size:13px;letter-spacing:.32em;color:#8a8f8e;line-height:1.9;}
+
+  .spin-wrap{display:flex;justify-content:center;margin-top:26px;}
+  .spin-btn{
+    font-family:'Space Mono',monospace;font-size:12px;letter-spacing:.3em;color:#41474d;
+    background:transparent;border:1.5px solid #c2bfb4;border-radius:40px;padding:11px 30px;
+    cursor:pointer;transition:all .2s;
+  }
+  .spin-btn:hover{background:#41474d;color:#f4f2ee;border-color:#41474d;}
+
+  /* THE CARD */
+  .card{
+    width:368px;max-width:92vw;background:var(--paper);border-radius:5px;overflow:hidden;
+    box-shadow:0 18px 44px -22px rgba(40,44,48,.45),0 2px 6px rgba(40,44,48,.12);
+    align-self:stretch;display:flex;flex-direction:column;min-height:430px;
+  }
+  .card__band{height:90px;transition:background .5s;display:flex;align-items:flex-end;padding:0 32px 16px;}
+  .card__band span{font-family:'Space Mono',monospace;font-size:11px;letter-spacing:.34em;opacity:.85;}
+  .card__body{padding:26px 32px 36px;flex:1;display:flex;flex-direction:column;}
+  .card__name{font-weight:700;font-size:46px;letter-spacing:.01em;color:#3a4148;line-height:1;}
+  .card__rule{width:46px;height:4px;margin:22px 0;transition:background .5s;}
+  .card__desc{font-family:'Spectral',Georgia,serif;font-size:18.5px;line-height:1.62;color:#4c5258;margin:0;text-wrap:pretty;}
+  .card__spacer{flex:1;}
+  .card__counter{font-family:'Space Mono',monospace;font-size:10.5px;letter-spacing:.26em;color:#aeb1ac;margin-top:28px;}
+</style>
+</head>
+<body>
+
+  <!-- THE BOX -->
+  <div class="box">
+    <div class="box__title">EMOTIONAL BAROMETER</div>
+    <div class="box__subtitle">A TOOL TO<br>EXPLAIN OUR MOODS</div>
+
+    <div class="wheel-wrap">
+      <div class="stage" id="stage">
+        <div class="pointer"></div>
+        <div class="rotor" id="rotor">
+          <svg viewBox="0 0 600 600" id="segSvg"></svg>
+          <div id="labels"></div>
+        </div>
+        <div class="hub"><div class="hub__pin"></div></div>
+      </div>
+    </div>
+
+    <div class="hint">DRAG TO SPIN · TAP A MOOD</div>
+    <div class="box__footer">20 CARDS TO<br>DEFINE OUR INNER WEATHER</div>
+
+    <div class="spin-wrap">
+      <button class="spin-btn" id="spinBtn">SPIN</button>
+    </div>
+  </div>
+
+  <!-- THE CARD -->
+  <div class="card">
+    <div class="card__band" id="cardBand"><span id="cardBandText">ON FEELING</span></div>
+    <div class="card__body">
+      <div class="card__name" id="cardName"></div>
+      <div class="card__rule" id="cardRule"></div>
+      <p class="card__desc" id="cardDesc"></p>
+      <div class="card__spacer"></div>
+      <div class="card__counter" id="cardCounter"></div>
+    </div>
+  </div>
+
+<script>
+(function(){
+  "use strict";
+
+  var DATA = [
+    { n:'HAPPY',        c:'#F2A93B', d:'A light, uncomplicated contentment — one of those rare hours when nothing needs fixing and the present feels entirely enough.' },
+    { n:'AWED',         c:'#F0998A', d:'Wonder in the face of something far larger than ourselves; the pleasant smallness of standing before the vast and beautiful.' },
+    { n:'NOSTALGIC',    c:'#8FC9E2', d:'A tender ache for a past that glows warmer in memory than it ever quite did in fact.' },
+    { n:'ANXIOUS',      c:'#F4DC3C', d:'A restless bracing against dangers we cannot quite name. Everyone carries far more of it than they let on.' },
+    { n:'LOVING',       c:'#F3C0D2', d:'An open-hearted warmth toward another, wanting their good almost more keenly than our own.' },
+    { n:'DREAMY',       c:'#4FA3D9', d:'Half here and half elsewhere; the mind drifting pleasantly off its leash, unbothered by the clock.' },
+    { n:'CONFIDENT',    c:'#EE6F4B', d:'A quiet trust that we can meet whatever is coming — without any need to prove it to a soul.' },
+    { n:'GUILTY',       c:'#C9A77C', d:'The uneasy sense of having fallen a little short of the person we had hoped to be.' },
+    { n:'SULKY',        c:'#8C9095', d:'Intense anger bound to an intense refusal to say what is wrong — a strange privilege we reserve for those we trust to understand.' },
+    { n:'GRATEFUL',     c:'#7FC3DC', d:'Noticing, for once, just how much had to go right for this ordinary moment to exist at all.' },
+    { n:'ENVIOUS',      c:'#9CC03A', d:'A sharp wanting, sparked by another’s life — read kindly, it is a map of what we secretly long for.' },
+    { n:'SOLITARY',     c:'#E4E1DA', d:'A chosen aloneness; the deep relief of being unobserved and, for a while, answerable to no one.' },
+    { n:'OBSESSED',     c:'#F08CA6', d:'A mind circling one person or idea — telling us, in the end, more about ourselves than about them.' },
+    { n:'UGLY',         c:'#5C5F63', d:'The days we can hardly bear our own reflection, forgetting that everyone, sometimes, feels exactly this.' },
+    { n:'PRACTICAL',    c:'#8FD3C2', d:'Head down, sleeves up: the steadying, underrated satisfaction of simply getting things done.' },
+    { n:'WEEPY',        c:'#CDBBA0', d:'Close to tears for no single reason — a softness that has been waiting quietly to be let out.' },
+    { n:'SENSUAL',      c:'#B79BC4', d:'Awake to the body and its small pleasures: texture, warmth, taste, the grace of being touched.' },
+    { n:'MELANCHOLY',   c:'#9AA7D0', d:'A gentle, unhurried sadness that knows the world is bittersweet — and rather loves it anyway.' },
+    { n:'SELF-PITYING', c:'#C5E07A', d:'Quietly convinced the world has been unfair to us in particular; a mood best met with a little humour.' },
+    { n:'NEEDY',        c:'#C6BCE0', d:'An unashamed wish to be held and reassured — the brave admission that we cannot do it all alone.' }
+  ];
+
+  var PAPER = '#f4f2ee';
+  var COUNT = DATA.length;        // 20
+  var STEP  = 360 / COUNT;        // 18 degrees per segment
+
+  var EASE_SELECT = '0.55s cubic-bezier(.2,.8,.25,1)';
+  var EASE_SPIN   = '1.7s cubic-bezier(.13,.79,.16,1)';
+
+  // --- geometry helpers (matching the original prototype) ---
+  function pt(angDeg, r){
+    var a = angDeg * Math.PI / 180;
+    return [300 + r * Math.sin(a), 300 - r * Math.cos(a)];
+  }
+  function lum(hex){
+    var m = hex.replace('#','');
+    var r = parseInt(m.slice(0,2),16)/255,
+        g = parseInt(m.slice(2,4),16)/255,
+        b = parseInt(m.slice(4,6),16)/255;
+    return 0.299*r + 0.587*g + 0.114*b;
+  }
+  function norm(d){ return ((d % 360) + 540) % 360 - 180; }
+
+  // --- state ---
+  var rotation = 0;
+  var selectedIndex = 0;
+  var dragging = false;
+  var startAng = 0, startRot = 0, downSeg = 0, moved = false;
+
+  // --- elements ---
+  var stage   = document.getElementById('stage');
+  var rotor   = document.getElementById('rotor');
+  var segSvg  = document.getElementById('segSvg');
+  var labelsEl= document.getElementById('labels');
+  var spinBtn = document.getElementById('spinBtn');
+
+  var cardBand    = document.getElementById('cardBand');
+  var cardBandTxt = document.getElementById('cardBandText');
+  var cardName    = document.getElementById('cardName');
+  var cardRule    = document.getElementById('cardRule');
+  var cardDesc    = document.getElementById('cardDesc');
+  var cardCounter = document.getElementById('cardCounter');
+
+  var SVGNS = 'http://www.w3.org/2000/svg';
+  var paths = [];
+
+  // --- build the wheel once ---
+  function buildWheel(){
+    DATA.forEach(function(it, i){
+      var a = i * STEP;
+      var p1 = pt(a - STEP/2, 250);
+      var p2 = pt(a + STEP/2, 250);
+      var d = 'M 300 300 L ' + p1[0].toFixed(2) + ' ' + p1[1].toFixed(2) +
+              ' A 250 250 0 0 1 ' + p2[0].toFixed(2) + ' ' + p2[1].toFixed(2) + ' Z';
+
+      var path = document.createElementNS(SVGNS, 'path');
+      path.setAttribute('d', d);
+      path.setAttribute('fill', it.c);
+      path.setAttribute('stroke', PAPER);
+      path.setAttribute('stroke-width', 1.5);
+      path.setAttribute('stroke-linejoin', 'round');
+      segSvg.appendChild(path);
+      paths.push(path);
+
+      var lp = pt(a, 162);
+      var label = document.createElement('div');
+      label.className = 'seg-label';
+      label.textContent = it.n;
+      label.style.left = (lp[0] / 600 * 100).toFixed(3) + '%';
+      label.style.top  = (lp[1] / 600 * 100).toFixed(3) + '%';
+      label.style.transform = 'translate(-50%,-50%) rotate(' + (a - 90).toFixed(1) + 'deg)';
+      label.style.color = lum(it.c) < 0.56 ? '#f6f4ef' : '#34383c';
+      labelsEl.appendChild(label);
+    });
+  }
+
+  // --- render reactive bits ---
+  function renderRotor(){
+    rotor.style.transition = dragging ? 'transform 0s' : ('transform ' + curEase);
+    rotor.style.transform  = 'rotate(' + rotation + 'deg)';
+  }
+
+  function renderSelection(){
+    paths.forEach(function(p, i){
+      var sel = i === selectedIndex;
+      p.setAttribute('stroke', sel ? '#3a4148' : PAPER);
+      p.setAttribute('stroke-width', sel ? 3 : 1.5);
+    });
+    var s = DATA[selectedIndex];
+    var contrast = lum(s.c) < 0.56 ? '#f6f4ef' : '#34383c';
+    cardBand.style.background = s.c;
+    cardBandTxt.style.color = contrast;
+    cardName.textContent = s.n;
+    cardRule.style.background = s.c;
+    cardDesc.textContent = s.d;
+    cardCounter.textContent = 'NO. ' + String(selectedIndex + 1).padStart(2, '0') + ' · OF TWENTY MOODS';
+  }
+
+  var curEase = EASE_SELECT;
+
+  function selectIndex(i){
+    var target = rotation + norm(-i * STEP - rotation);
+    curEase = EASE_SELECT;
+    rotation = target;
+    selectedIndex = i;
+    renderRotor();
+    renderSelection();
+  }
+
+  function spin(){
+    var i = Math.floor(Math.random() * COUNT);
+    var target = rotation + norm(-i * STEP - rotation) + 360 * 4;
+    curEase = EASE_SPIN;
+    rotation = target;
+    selectedIndex = i;
+    renderRotor();
+    renderSelection();
+  }
+
+  // --- pointer interaction ---
+  function getAngle(e){
+    var r = stage.getBoundingClientRect();
+    var dx = e.clientX - (r.left + r.width/2);
+    var dy = e.clientY - (r.top + r.height/2);
+    return Math.atan2(dx, -dy) * 180 / Math.PI;
+  }
+
+  function onDown(e){
+    var ang = getAngle(e);
+    startAng = ang;
+    startRot = rotation;
+    downSeg = ((Math.round((ang - rotation) / STEP) % COUNT) + COUNT) % COUNT;
+    moved = false;
+    dragging = true;
+    stage.classList.add('dragging');
+    try { stage.setPointerCapture(e.pointerId); } catch(_){}
+  }
+
+  function onMove(e){
+    if (!dragging) return;
+    var delta = norm(getAngle(e) - startAng);
+    if (Math.abs(delta) > 2.5) moved = true;
+    rotation = startRot + delta;
+    renderRotor();
+  }
+
+  function onUp(){
+    if (!dragging) return;
+    var idx = moved
+      ? (((Math.round(-rotation / STEP) % COUNT) + COUNT) % COUNT)
+      : downSeg;
+    dragging = false;
+    stage.classList.remove('dragging');
+    selectIndex(idx);
+  }
+
+  stage.addEventListener('pointerdown', onDown);
+  stage.addEventListener('pointermove', onMove);
+  stage.addEventListener('pointerup', onUp);
+  stage.addEventListener('pointerleave', onUp);
+  stage.addEventListener('pointercancel', onUp);
+  spinBtn.addEventListener('click', spin);
+
+  // --- init ---
+  buildWheel();
+  renderRotor();
+  renderSelection();
+})();
+</script>
+</body>
+</html>
