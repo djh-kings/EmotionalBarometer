@@ -72,9 +72,14 @@
   .dial__sub{font-family:'Space Mono',monospace;font-size:9.5px;letter-spacing:.26em;margin-top:8px;color:#f4f2ee;opacity:.7;}
 
   /* the revealed description */
-  .reveal{margin:20px auto 0;max-width:440px;text-align:center;}
+  .reveal{margin:20px auto 0;max-width:460px;text-align:center;}
   .reveal__rule{width:40px;height:3px;margin:0 auto 16px;}
-  .reveal__desc{font-family:'Spectral',Georgia,serif;font-size:19px;line-height:1.6;color:#4c5258;margin:0;text-wrap:pretty;}
+  /* body copy can run to a paragraph or two — left-align for readability */
+  .reveal__desc{font-family:'Spectral',Georgia,serif;font-size:19px;line-height:1.6;color:#4c5258;text-align:left;text-wrap:pretty;}
+  .reveal__desc p{margin:0 0 .85em;}
+  .reveal__desc p:last-child{margin-bottom:0;}
+  .reveal__desc a{color:#3a4148;text-decoration:underline;text-underline-offset:2px;text-decoration-thickness:1px;}
+  .reveal__desc a:hover{color:#000;}
   .reveal__counter{font-family:'Space Mono',monospace;font-size:10px;letter-spacing:.28em;color:#aeb1ac;margin-top:18px;}
 
   .idle-hint{text-align:center;font-family:'Space Mono',monospace;font-size:11px;letter-spacing:.28em;color:#a7aaa6;margin-top:22px;}
@@ -123,7 +128,7 @@
 
     <div class="reveal hidden" id="reveal">
       <div class="reveal__rule" id="revealRule"></div>
-      <p class="reveal__desc" id="revealDesc"></p>
+      <div class="reveal__desc" id="revealDesc"></div>
       <div class="reveal__counter" id="revealCounter"></div>
     </div>
 
@@ -132,32 +137,13 @@
     <div class="panel__credit">DESIGNED BY BARBARA FERRAMOSCA</div>
   </div>
 
+<script src="moods.js"></script>
 <script>
 (function(){
   "use strict";
 
-  var DATA = [
-    { n:'HAPPY',        c:'#F2A93B', d:'A light, uncomplicated contentment — one of those rare hours when nothing needs fixing and the present feels entirely enough.' },
-    { n:'AWED',         c:'#F0998A', d:'Wonder in the face of something far larger than ourselves; the pleasant smallness of standing before the vast and beautiful.' },
-    { n:'NOSTALGIC',    c:'#8FC9E2', d:'A tender ache for a past that glows warmer in memory than it ever quite did in fact.' },
-    { n:'ANXIOUS',      c:'#F4DC3C', d:'A restless bracing against dangers we cannot quite name. Everyone carries far more of it than they let on.' },
-    { n:'LOVING',       c:'#F3C0D2', d:'An open-hearted warmth toward another, wanting their good almost more keenly than our own.' },
-    { n:'DREAMY',       c:'#4FA3D9', d:'Half here and half elsewhere; the mind drifting pleasantly off its leash, unbothered by the clock.' },
-    { n:'CONFIDENT',    c:'#EE6F4B', d:'A quiet trust that we can meet whatever is coming — without any need to prove it to a soul.' },
-    { n:'GUILTY',       c:'#C9A77C', d:'The uneasy sense of having fallen a little short of the person we had hoped to be.' },
-    { n:'SULKY',        c:'#8C9095', d:'Intense anger bound to an intense refusal to say what is wrong — a strange privilege we reserve for those we trust to understand.' },
-    { n:'GRATEFUL',     c:'#7FC3DC', d:'Noticing, for once, just how much had to go right for this ordinary moment to exist at all.' },
-    { n:'ENVIOUS',      c:'#9CC03A', d:'A sharp wanting, sparked by another’s life — read kindly, it is a map of what we secretly long for.' },
-    { n:'SOLITARY',     c:'#E4E1DA', d:'A chosen aloneness; the deep relief of being unobserved and, for a while, answerable to no one.' },
-    { n:'OBSESSED',     c:'#F08CA6', d:'A mind circling one person or idea — telling us, in the end, more about ourselves than about them.' },
-    { n:'UGLY',         c:'#5C5F63', d:'The days we can hardly bear our own reflection, forgetting that everyone, sometimes, feels exactly this.' },
-    { n:'PRACTICAL',    c:'#8FD3C2', d:'Head down, sleeves up: the steadying, underrated satisfaction of simply getting things done.' },
-    { n:'WEEPY',        c:'#CDBBA0', d:'Close to tears for no single reason — a softness that has been waiting quietly to be let out.' },
-    { n:'SENSUAL',      c:'#B79BC4', d:'Awake to the body and its small pleasures: texture, warmth, taste, the grace of being touched.' },
-    { n:'MELANCHOLY',   c:'#9AA7D0', d:'A gentle, unhurried sadness that knows the world is bittersweet — and rather loves it anyway.' },
-    { n:'SELF-PITYING', c:'#C5E07A', d:'Quietly convinced the world has been unfair to us in particular; a mood best met with a little humour.' },
-    { n:'NEEDY',        c:'#C6BCE0', d:'An unashamed wish to be held and reassured — the brave admission that we cannot do it all alone.' }
-  ];
+  // Mood content lives in moods.js (window.BAROMETER_MOODS) for easy editing.
+  var DATA = window.BAROMETER_MOODS || [];
 
   var COUNT = DATA.length;     // 20
   var STEP  = 360 / COUNT;     // 18 degrees per segment
@@ -175,6 +161,29 @@
   }
   function ink(hex){ return lum(hex) < 0.55 ? '#f6f4ef' : '#34383c'; }
   function norm(d){ return ((d % 360) + 540) % 360 - 180; }
+
+  // --- minimal, safe Markdown for the mood copy (paragraphs, links, em/strong) ---
+  function escapeHtml(s){
+    return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+            .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+  }
+  function safeLink(url, label){
+    var raw = url.replace(/&amp;/g,'&');                 // url is already html-escaped
+    if (!/^(https?:|mailto:)/i.test(raw)) return label;  // drop unknown protocols, keep text
+    return '<a href="' + url + '" target="_blank" rel="noopener noreferrer">' + label + '</a>';
+  }
+  function inlineMd(s){
+    s = s.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');          // **bold**
+    s = s.replace(/(^|[^*])\*([^*\n]+)\*/g, '$1<em>$2</em>');           // *italic*
+    s = s.replace(/\[([^\]]+)\]\(([^)\s]+)\)/g, function(_, label, url){ return safeLink(url, label); });
+    return s;
+  }
+  function renderMarkdown(src){
+    if (!src) return '';
+    return src.trim().split(/\n\s*\n/).map(function(block){
+      return '<p>' + inlineMd(escapeHtml(block.trim())).replace(/\n/g, '<br>') + '</p>';
+    }).join('');
+  }
   function segUnder(rotDeg){ return ((Math.round(-rotDeg / STEP) % COUNT) + COUNT) % COUNT; }
 
   // --- state ---
@@ -256,7 +265,7 @@
       subEl.style.color = ink(s.c);
 
       revealRule.style.background = s.c;
-      revealDesc.textContent = s.d;
+      revealDesc.innerHTML = renderMarkdown(s.body);
       revealCounter.textContent = 'NO. ' + String(selectedIndex + 1).padStart(2, '0') + ' · OF TWENTY MOODS';
       reveal.classList.remove('hidden');
       idleHint.classList.add('hidden');

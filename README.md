@@ -36,5 +36,19 @@ python3 -m http.server 8000
 - When the wheel stops, the chosen mood's name appears on the dial and its
   definition fades in below.
 
-Everything lives in `index.html` (markup, styles and vanilla JS) — no build step
-and no external dependencies beyond the Google Fonts used for typography.
+The app lives in `index.html` (markup, styles and vanilla JS) — no build step and
+no external dependencies beyond the Google Fonts used for typography.
+
+## Editing the mood text
+
+All wording lives in **`moods.js`** — the only file you edit to change copy. Each
+mood has a `body` written in **Markdown**:
+
+- Separate paragraphs with a blank line.
+- Links: `[School of Life](https://www.theschooloflife.com)` — these open in a new
+  tab and are restricted to `http`/`https`/`mailto` for safety.
+- Emphasis: `*italic*` and `**bold**`.
+
+For multi-paragraph entries, use backticks instead of quotes so you can press
+Enter freely (see the comment at the top of `moods.js`). The mood names and
+segment colours match the printed wheel and should be left as they are.
