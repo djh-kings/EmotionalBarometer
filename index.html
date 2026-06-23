@@ -183,7 +183,8 @@
   var STEP  = 360 / COUNT;        // 18 degrees per segment
 
   var EASE_SELECT = '0.55s cubic-bezier(.2,.8,.25,1)';
-  var EASE_SPIN   = '1.7s cubic-bezier(.13,.79,.16,1)';
+  // easeOutExpo — fast to start, then a long, friction-like settle
+  var FRICTION = 'cubic-bezier(0.16, 1, 0.3, 1)';
 
   // --- geometry helpers (matching the original prototype) ---
   function pt(angDeg, r){
@@ -204,6 +205,7 @@
   var selectedIndex = 0;
   var dragging = false;
   var startAng = 0, startRot = 0, downSeg = 0, moved = false;
+  var lastT = 0, lastRot = 0, vel = 0;   // for flick-momentum on release
 
   // --- elements ---
   var stage   = document.getElementById('stage');
@@ -288,14 +290,23 @@
     renderSelection();
   }
 
-  function spin(){
-    var i = Math.floor(Math.random() * COUNT);
-    var target = rotation + norm(-i * STEP - rotation) + 360 * 4;
-    curEase = EASE_SPIN;
+  // Glide to the nearest segment from an (over-shot) raw rotation, keeping any
+  // full turns so the wheel coasts to rest rather than snapping back.
+  function landOn(raw, durSec){
+    var target = Math.round(raw / STEP) * STEP;
+    var i = (((-Math.round(target / STEP)) % COUNT) + COUNT) % COUNT;
+    curEase = durSec.toFixed(2) + 's ' + FRICTION;
     rotation = target;
     selectedIndex = i;
     renderRotor();
     renderSelection();
+  }
+
+  function spin(){
+    var turns = 3 + Math.floor(Math.random() * 3);              // 3–5 full turns
+    var raw = rotation + 360 * turns + Math.random() * 360;      // random landing
+    var dur = 2.6 + turns * 0.22 + Math.random() * 0.4;
+    landOn(raw, dur);
   }
 
   // --- pointer interaction ---
@@ -313,6 +324,9 @@
     downSeg = ((Math.round((ang - rotation) / STEP) % COUNT) + COUNT) % COUNT;
     moved = false;
     dragging = true;
+    lastT = (e.timeStamp || performance.now());
+    lastRot = rotation;
+    vel = 0;
     stage.classList.add('dragging');
     try { stage.setPointerCapture(e.pointerId); } catch(_){}
   }
@@ -322,17 +336,35 @@
     var delta = norm(getAngle(e) - startAng);
     if (Math.abs(delta) > 2.5) moved = true;
     rotation = startRot + delta;
+
+    // track angular velocity (deg/ms), smoothed, so a flick can carry through
+    var now = (e.timeStamp || performance.now());
+    var dt = now - lastT;
+    if (dt > 0){
+      var inst = (rotation - lastRot) / dt;
+      vel = vel * 0.6 + inst * 0.4;
+      lastT = now;
+      lastRot = rotation;
+    }
     renderRotor();
   }
 
   function onUp(){
     if (!dragging) return;
-    var idx = moved
-      ? (((Math.round(-rotation / STEP) % COUNT) + COUNT) % COUNT)
-      : downSeg;
     dragging = false;
     stage.classList.remove('dragging');
-    selectIndex(idx);
+
+    if (!moved){ selectIndex(downSeg); return; }
+
+    // A quick flick keeps spinning; a slow, deliberate drag just settles.
+    if (Math.abs(vel) > 0.12){
+      var glide = Math.max(-360 * 5, Math.min(360 * 5, vel * 380));
+      var dur = Math.min(3.0, Math.max(0.6, Math.abs(glide) / 700));
+      landOn(rotation + glide, dur);
+    } else {
+      var idx = (((Math.round(-rotation / STEP) % COUNT) + COUNT) % COUNT);
+      selectIndex(idx);
+    }
   }
 
   stage.addEventListener('pointerdown', onDown);
