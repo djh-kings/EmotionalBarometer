@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Emotional Barometer · A tool to explain our moods</title>
-<meta name="description" content="An interactive Emotional Barometer — spin the wheel of twenty moods to better understand our inner emotional weather.">
+<meta name="description" content="An interactive Emotional Barometer — press the dial or spin the wheel of twenty moods to better understand our inner emotional weather.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Space+Mono:wght@400;700&family=Spectral:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
@@ -12,143 +12,116 @@
   *{box-sizing:border-box;}
   html,body{margin:0;}
   ::selection{background:#cdcabf;}
+  @keyframes bm-fade{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
 
   :root{ --paper:#f4f2ee; }
 
   body{
     min-height:100vh;width:100%;
     background:#e7e5df;
-    display:flex;align-items:center;justify-content:center;flex-wrap:wrap;
-    gap:44px;padding:56px 40px;
+    display:flex;align-items:center;justify-content:center;
+    padding:48px 32px;
     font-family:'Oswald',sans-serif;
   }
 
-  /* THE BOX */
-  .box{
-    width:560px;max-width:92vw;
-    background:var(--paper);border-radius:5px;padding:50px 44px 40px;
+  .panel{
+    width:600px;max-width:94vw;
+    background:var(--paper);border-radius:5px;padding:48px 44px 44px;
     box-shadow:0 1px 0 rgba(255,255,255,.7) inset,0 18px 44px -22px rgba(40,44,48,.45),0 2px 6px rgba(40,44,48,.12);
   }
-  .box__title{text-align:center;font-weight:700;font-size:42px;letter-spacing:.02em;color:#3a4148;line-height:1;}
-  .box__subtitle{text-align:center;font-family:'Space Mono',monospace;font-size:13px;letter-spacing:.34em;color:#8a8f8e;margin-top:18px;line-height:1.9;}
+  .panel__title{text-align:center;font-weight:700;font-size:40px;letter-spacing:.02em;color:#3a4148;line-height:1;}
+  .panel__subtitle{text-align:center;font-family:'Space Mono',monospace;font-size:12px;letter-spacing:.34em;color:#8a8f8e;margin-top:16px;}
 
-  .wheel-wrap{display:flex;justify-content:center;margin:34px 0 18px;}
-  .stage{position:relative;width:430px;height:430px;max-width:78vw;touch-action:none;user-select:none;cursor:grab;}
+  .wheel-wrap{display:flex;justify-content:center;margin:36px 0 10px;}
+  .stage{
+    position:relative;
+    width:min(460px,80vw);height:min(460px,80vw);
+    touch-action:none;user-select:none;cursor:grab;
+  }
   .stage.dragging{cursor:grabbing;}
 
   .pointer{
-    position:absolute;top:-7px;left:50%;transform:translateX(-50%);
-    width:0;height:0;border-left:15px solid transparent;border-right:15px solid transparent;border-top:27px solid #565b60;
+    position:absolute;top:-6px;left:50%;transform:translateX(-50%);
+    width:0;height:0;border-left:16px solid transparent;border-right:16px solid transparent;border-top:30px solid #3a4148;
     z-index:6;filter:drop-shadow(0 2px 2px rgba(40,44,48,.3));
   }
   .rotor{position:absolute;inset:0;will-change:transform;}
   .rotor svg{width:100%;height:100%;display:block;overflow:visible;}
-  .seg-label{
-    position:absolute;transform-origin:center;
-    color:#34383c;font-family:'Oswald',sans-serif;font-weight:600;font-size:12.5px;
-    letter-spacing:.05em;white-space:nowrap;pointer-events:none;
-  }
 
-  .hub{
-    position:absolute;left:50%;top:50%;width:118px;height:118px;transform:translate(-50%,-50%);
-    border-radius:50%;background:var(--paper);
-    box-shadow:0 3px 10px rgba(40,44,48,.22),0 0 0 1px rgba(40,44,48,.05);
-    z-index:5;display:flex;align-items:center;justify-content:center;
+  /* the centre dial */
+  .dial{
+    position:absolute;left:50%;top:50%;
+    width:40%;height:40%;max-width:182px;max-height:182px;
+    transform:translate(-50%,-50%);
+    border-radius:50%;border:none;z-index:5;cursor:pointer;
+    background:var(--paper);
+    box-shadow:0 4px 16px rgba(40,44,48,.2),0 0 0 1px rgba(40,44,48,.06);
+    display:flex;align-items:center;justify-content:center;padding:0;
+    font-family:'Oswald',sans-serif;transition:box-shadow .3s;
   }
-  .hub__pin{
-    width:38px;height:38px;border-radius:50%;
-    background:radial-gradient(circle at 36% 30%,#fdfdfd,#cdd1d2 38%,#8d9395 72%,#666b6d);
-    box-shadow:0 1px 3px rgba(40,44,48,.4),inset 0 -2px 3px rgba(0,0,0,.25);
+  .dial:hover{box-shadow:0 6px 22px rgba(40,44,48,.28),0 0 0 1px rgba(40,44,48,.06);}
+  .dial:disabled{cursor:default;}
+  .dial__ring{
+    width:82%;height:82%;border-radius:50%;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;
+    background:#41474d;
+    box-shadow:inset 0 2px 6px rgba(255,255,255,.35),inset 0 -3px 8px rgba(0,0,0,.12);
+    transition:background .25s ease;
   }
+  .dial__word{font-weight:700;font-size:30px;letter-spacing:.02em;line-height:.95;color:#f4f2ee;padding:0 8px;text-wrap:balance;}
+  .dial__sub{font-family:'Space Mono',monospace;font-size:9.5px;letter-spacing:.26em;margin-top:8px;color:#f4f2ee;opacity:.7;}
 
-  .hint{text-align:center;font-family:'Space Mono',monospace;font-size:11px;letter-spacing:.28em;color:#a7aaa6;margin-bottom:18px;}
-  .box__footer{text-align:center;font-family:'Space Mono',monospace;font-size:13px;letter-spacing:.32em;color:#8a8f8e;line-height:1.9;}
+  /* the revealed description */
+  .reveal{margin:20px auto 0;max-width:440px;text-align:center;}
+  .reveal__rule{width:40px;height:3px;margin:0 auto 16px;}
+  .reveal__desc{font-family:'Spectral',Georgia,serif;font-size:19px;line-height:1.6;color:#4c5258;margin:0;text-wrap:pretty;}
+  .reveal__counter{font-family:'Space Mono',monospace;font-size:10px;letter-spacing:.28em;color:#aeb1ac;margin-top:18px;}
 
-  .spin-wrap{display:flex;justify-content:center;margin-top:26px;}
-  .spin-btn{
-    font-family:'Space Mono',monospace;font-size:12px;letter-spacing:.3em;color:#41474d;
-    background:transparent;border:1.5px solid #c2bfb4;border-radius:40px;padding:11px 30px;
-    cursor:pointer;transition:all .2s;
-  }
-  .spin-btn:hover{background:#41474d;color:#f4f2ee;border-color:#41474d;}
+  .idle-hint{text-align:center;font-family:'Space Mono',monospace;font-size:11px;letter-spacing:.28em;color:#a7aaa6;margin-top:22px;}
 
-  /* THE CARD */
-  .card{
-    width:368px;max-width:92vw;background:var(--paper);border-radius:5px;overflow:hidden;
-    box-shadow:0 18px 44px -22px rgba(40,44,48,.45),0 2px 6px rgba(40,44,48,.12);
-    align-self:stretch;display:flex;flex-direction:column;min-height:430px;
-  }
-  .card__band{height:90px;transition:background .5s;display:flex;align-items:flex-end;padding:0 32px 16px;}
-  .card__band span{font-family:'Space Mono',monospace;font-size:11px;letter-spacing:.34em;opacity:.85;}
-  .card__body{padding:26px 32px 36px;flex:1;display:flex;flex-direction:column;}
-  .card__name{font-weight:700;font-size:46px;letter-spacing:.01em;color:#3a4148;line-height:1;}
-  .card__rule{width:46px;height:4px;margin:22px 0;transition:background .5s;}
-  .card__desc{font-family:'Spectral',Georgia,serif;font-size:18.5px;line-height:1.62;color:#4c5258;margin:0;text-wrap:pretty;}
-  .card__spacer{flex:1;}
-  .card__counter{font-family:'Space Mono',monospace;font-size:10.5px;letter-spacing:.26em;color:#aeb1ac;margin-top:28px;}
+  .hidden{display:none;}
 
-  /* MOBILE — tighten everything so the wheel and SPIN button fit on screen */
   @media (max-width:640px){
-    body{padding:20px 12px;gap:20px;}
-
-    .box{padding:24px 18px 22px;}
-    .box__title{font-size:30px;}
-    .box__subtitle{margin-top:11px;font-size:11px;letter-spacing:.28em;}
-
-    /* keep the wheel a square that scales with width (height no longer fixed) */
-    .wheel-wrap{margin:20px 0 12px;}
-    .stage{width:72vw;height:72vw;max-width:360px;max-height:360px;}
-    .hub{width:27vw;height:27vw;max-width:118px;max-height:118px;}
-
-    .hint{margin-bottom:12px;}
-    .box__footer{font-size:11px;letter-spacing:.26em;}
-    .spin-wrap{margin-top:18px;}
-
-    /* let the card size to its content instead of a tall fixed minimum */
-    .card{min-height:0;}
-    .card__band{height:72px;}
-    .card__body{padding:22px 24px 28px;}
-    .card__name{font-size:38px;}
-    .card__desc{font-size:17px;}
+    body{padding:24px 12px;}
+    .panel{padding:30px 18px 26px;}
+    .panel__title{font-size:30px;}
+    .panel__subtitle{font-size:11px;letter-spacing:.26em;}
+    .wheel-wrap{margin:26px 0 8px;}
+    .stage{width:80vw;height:80vw;}
+    .reveal__desc{font-size:17px;}
   }
 </style>
 </head>
 <body>
 
-  <!-- THE BOX -->
-  <div class="box">
-    <div class="box__title">EMOTIONAL BAROMETER</div>
-    <div class="box__subtitle">A TOOL TO<br>EXPLAIN OUR MOODS</div>
+  <div class="panel">
+    <div class="panel__title">EMOTIONAL BAROMETER</div>
+    <div class="panel__subtitle">A TOOL TO EXPLAIN OUR MOODS</div>
 
     <div class="wheel-wrap">
       <div class="stage" id="stage">
         <div class="pointer"></div>
         <div class="rotor" id="rotor">
-          <svg viewBox="0 0 600 600" id="segSvg"></svg>
-          <div id="labels"></div>
+          <svg viewBox="0 0 600 600" id="segSvg">
+            <circle cx="300" cy="300" r="252" fill="none" stroke="rgba(40,44,48,.14)" stroke-width="2"></circle>
+          </svg>
         </div>
-        <div class="hub"><div class="hub__pin"></div></div>
+        <button class="dial" id="dial" type="button">
+          <div class="dial__ring" id="ring">
+            <div class="dial__word" id="word">SPIN</div>
+            <div class="dial__sub" id="sub">THE DIAL</div>
+          </div>
+        </button>
       </div>
     </div>
 
-    <div class="hint">DRAG TO SPIN · TAP A MOOD</div>
-    <div class="box__footer">20 CARDS TO<br>DEFINE OUR INNER WEATHER</div>
-
-    <div class="spin-wrap">
-      <button class="spin-btn" id="spinBtn">SPIN</button>
+    <div class="reveal hidden" id="reveal">
+      <div class="reveal__rule" id="revealRule"></div>
+      <p class="reveal__desc" id="revealDesc"></p>
+      <div class="reveal__counter" id="revealCounter"></div>
     </div>
-  </div>
 
-  <!-- THE CARD -->
-  <div class="card">
-    <div class="card__band" id="cardBand"><span id="cardBandText">ON FEELING</span></div>
-    <div class="card__body">
-      <div class="card__name" id="cardName"></div>
-      <div class="card__rule" id="cardRule"></div>
-      <p class="card__desc" id="cardDesc"></p>
-      <div class="card__spacer"></div>
-      <div class="card__counter" id="cardCounter"></div>
-    </div>
+    <div class="idle-hint" id="idleHint">PRESS THE DIAL OR DRAG THE WHEEL TO SPIN</div>
   </div>
 
 <script>
@@ -178,193 +151,244 @@
     { n:'NEEDY',        c:'#C6BCE0', d:'An unashamed wish to be held and reassured — the brave admission that we cannot do it all alone.' }
   ];
 
-  var PAPER = '#f4f2ee';
-  var COUNT = DATA.length;        // 20
-  var STEP  = 360 / COUNT;        // 18 degrees per segment
+  var COUNT = DATA.length;     // 20
+  var STEP  = 360 / COUNT;     // 18 degrees per segment
 
-  var EASE_SELECT = '0.55s cubic-bezier(.2,.8,.25,1)';
-  // easeOutExpo — fast to start, then a long, friction-like settle
-  var FRICTION = 'cubic-bezier(0.16, 1, 0.3, 1)';
-
-  // --- geometry helpers (matching the original prototype) ---
+  // --- geometry / colour helpers ---
   function pt(angDeg, r){
     var a = angDeg * Math.PI / 180;
     return [300 + r * Math.sin(a), 300 - r * Math.cos(a)];
   }
   function lum(hex){
     var m = hex.replace('#','');
-    var r = parseInt(m.slice(0,2),16)/255,
-        g = parseInt(m.slice(2,4),16)/255,
-        b = parseInt(m.slice(4,6),16)/255;
-    return 0.299*r + 0.587*g + 0.114*b;
+    return 0.299*parseInt(m.slice(0,2),16)/255 +
+           0.587*parseInt(m.slice(2,4),16)/255 +
+           0.114*parseInt(m.slice(4,6),16)/255;
   }
+  function ink(hex){ return lum(hex) < 0.55 ? '#f6f4ef' : '#34383c'; }
   function norm(d){ return ((d % 360) + 540) % 360 - 180; }
+  function segUnder(rotDeg){ return ((Math.round(-rotDeg / STEP) % COUNT) + COUNT) % COUNT; }
 
   // --- state ---
-  var rotation = 0;
-  var selectedIndex = 0;
-  var dragging = false;
-  var startAng = 0, startRot = 0, downSeg = 0, moved = false;
-  var lastT = 0, lastRot = 0, vel = 0;   // for flick-momentum on release
+  var rotation = 0;        // committed angle
+  var cur = 0;             // live angle during drag / animation
+  var selectedIndex = -1;
+  var spinning = false;
+  var down = false, startAng = 0, startRot = 0, moved = false, samples = [];
+  var raf = null, fallback = null;
 
   // --- elements ---
   var stage   = document.getElementById('stage');
   var rotor   = document.getElementById('rotor');
   var segSvg  = document.getElementById('segSvg');
-  var labelsEl= document.getElementById('labels');
-  var spinBtn = document.getElementById('spinBtn');
-
-  var cardBand    = document.getElementById('cardBand');
-  var cardBandTxt = document.getElementById('cardBandText');
-  var cardName    = document.getElementById('cardName');
-  var cardRule    = document.getElementById('cardRule');
-  var cardDesc    = document.getElementById('cardDesc');
-  var cardCounter = document.getElementById('cardCounter');
+  var dial    = document.getElementById('dial');
+  var ring    = document.getElementById('ring');
+  var wordEl  = document.getElementById('word');
+  var subEl   = document.getElementById('sub');
+  var reveal  = document.getElementById('reveal');
+  var revealRule = document.getElementById('revealRule');
+  var revealDesc = document.getElementById('revealDesc');
+  var revealCounter = document.getElementById('revealCounter');
+  var idleHint = document.getElementById('idleHint');
 
   var SVGNS = 'http://www.w3.org/2000/svg';
-  var paths = [];
 
-  // --- build the wheel once ---
+  // --- build the wheel segments once (no labels — colour only) ---
   function buildWheel(){
     DATA.forEach(function(it, i){
       var a = i * STEP;
-      var p1 = pt(a - STEP/2, 250);
-      var p2 = pt(a + STEP/2, 250);
-      var d = 'M 300 300 L ' + p1[0].toFixed(2) + ' ' + p1[1].toFixed(2) +
-              ' A 250 250 0 0 1 ' + p2[0].toFixed(2) + ' ' + p2[1].toFixed(2) + ' Z';
-
+      var p1 = pt(a - STEP/2, 252);
+      var p2 = pt(a + STEP/2, 252);
       var path = document.createElementNS(SVGNS, 'path');
-      path.setAttribute('d', d);
+      path.setAttribute('d', 'M 300 300 L ' + p1[0].toFixed(2) + ' ' + p1[1].toFixed(2) +
+                             ' A 252 252 0 0 1 ' + p2[0].toFixed(2) + ' ' + p2[1].toFixed(2) + ' Z');
       path.setAttribute('fill', it.c);
-      path.setAttribute('stroke', PAPER);
+      path.setAttribute('stroke', getComputedStyle(document.documentElement).getPropertyValue('--paper').trim() || '#f4f2ee');
       path.setAttribute('stroke-width', 1.5);
       path.setAttribute('stroke-linejoin', 'round');
-      segSvg.appendChild(path);
-      paths.push(path);
-
-      var lp = pt(a, 162);
-      // Keep labels upright: on the lower half of the wheel, flip them 180°
-      // so the text reads normally instead of appearing upside-down.
-      var rot = (a > 90 && a < 270) ? a + 90 : a - 90;
-      var label = document.createElement('div');
-      label.className = 'seg-label';
-      label.textContent = it.n;
-      label.style.left = (lp[0] / 600 * 100).toFixed(3) + '%';
-      label.style.top  = (lp[1] / 600 * 100).toFixed(3) + '%';
-      label.style.transform = 'translate(-50%,-50%) rotate(' + rot.toFixed(1) + 'deg)';
-      label.style.color = lum(it.c) < 0.56 ? '#f6f4ef' : '#34383c';
-      labelsEl.appendChild(label);
+      // insert before the ring circle so the outline stays on top
+      segSvg.insertBefore(path, segSvg.firstChild);
     });
   }
 
-  // --- render reactive bits ---
-  function renderRotor(){
-    rotor.style.transition = dragging ? 'transform 0s' : ('transform ' + curEase);
-    rotor.style.transform  = 'rotate(' + rotation + 'deg)';
+  // --- rendering ---
+  function setRot(rot){
+    rotor.style.transform = 'rotate(' + rot + 'deg)';
+    paintDial(rot);
+  }
+  // paint the dial to match the segment currently under the pointer
+  function paintDial(rot){
+    var c = DATA[segUnder(rot)].c;
+    ring.style.background = c;
+    wordEl.style.color = ink(c);
+    subEl.style.color = ink(c);
   }
 
-  function renderSelection(){
-    paths.forEach(function(p, i){
-      var sel = i === selectedIndex;
-      p.setAttribute('stroke', sel ? '#3a4148' : PAPER);
-      p.setAttribute('stroke-width', sel ? 3 : 1.5);
-    });
-    var s = DATA[selectedIndex];
-    var contrast = lum(s.c) < 0.56 ? '#f6f4ef' : '#34383c';
-    cardBand.style.background = s.c;
-    cardBandTxt.style.color = contrast;
-    cardName.textContent = s.n;
-    cardRule.style.background = s.c;
-    cardDesc.textContent = s.d;
-    cardCounter.textContent = 'NO. ' + String(selectedIndex + 1).padStart(2, '0') + ' · OF TWENTY MOODS';
+  // reflect committed state (idle / selected / spinning) into the UI
+  function showState(){
+    rotor.style.transform = 'rotate(' + rotation + 'deg)';
+    dial.disabled = spinning;
+
+    if (spinning){
+      wordEl.textContent = '';
+      subEl.textContent = '';
+      wordEl.style.fontSize = '30px';
+      reveal.classList.add('hidden');
+      idleHint.classList.add('hidden');
+      return;
+    }
+
+    if (selectedIndex >= 0){
+      var s = DATA[selectedIndex];
+      wordEl.textContent = s.n;
+      subEl.textContent = 'TAP TO SPIN';
+      wordEl.style.fontSize = s.n.length > 9 ? '20px' : '27px';
+      ring.style.background = s.c;
+      wordEl.style.color = ink(s.c);
+      subEl.style.color = ink(s.c);
+
+      revealRule.style.background = s.c;
+      revealDesc.textContent = s.d;
+      revealCounter.textContent = 'NO. ' + String(selectedIndex + 1).padStart(2, '0') + ' · OF TWENTY MOODS';
+      reveal.classList.remove('hidden');
+      idleHint.classList.add('hidden');
+      // re-trigger the fade-in each selection
+      reveal.style.animation = 'none';
+      void reveal.offsetWidth;
+      reveal.style.animation = 'bm-fade .5s ease both';
+    } else {
+      wordEl.textContent = 'SPIN';
+      subEl.textContent = 'THE DIAL';
+      wordEl.style.fontSize = '30px';
+      ring.style.background = '#41474d';
+      wordEl.style.color = '#f4f2ee';
+      subEl.style.color = '#f4f2ee';
+      reveal.classList.add('hidden');
+      idleHint.classList.remove('hidden');
+    }
   }
 
-  var curEase = EASE_SELECT;
+  // --- animation control ---
+  function stopAnim(){ if (raf) cancelAnimationFrame(raf); raf = null; clearTimeout(fallback); }
+  function finish(to, idx){ stopAnim(); cur = to; rotation = to; spinning = false; selectedIndex = idx; showState(); }
 
-  function selectIndex(i){
-    var target = rotation + norm(-i * STEP - rotation);
-    curEase = EASE_SELECT;
-    rotation = target;
-    selectedIndex = i;
-    renderRotor();
-    renderSelection();
+  // Physics spin: angular velocity decays under friction, then eases into the
+  // nearest detent — so the outcome emerges from the motion and feels natural.
+  var K = 0.0019;       // friction (per ms); higher = stops sooner
+  var STOP_V = 0.018;   // deg/ms below which we begin the settle
+  var SNAP_MS = 460;    // gentle ease into the detent
+
+  function launch(v0){
+    stopAnim();
+    if (cur == null || isNaN(cur)) cur = rotation || 0;
+    var v = v0, phase = 'coast';
+    var snapFrom = 0, snapTo = 0, snapT0 = 0;
+    var last = performance.now();
+    function frame(now){
+      var dt = now - last; last = now;
+      if (dt > 64) dt = 64;                         // guard tab-stall jumps
+      if (phase === 'coast'){
+        cur += v * dt;
+        v *= Math.exp(-K * dt);
+        setRot(cur);
+        if (Math.abs(v) < STOP_V){
+          phase = 'snap';
+          snapFrom = cur;
+          snapTo = Math.round(cur / STEP) * STEP;
+          // ensure a touch of forward travel so the stop reads as deceleration
+          if ((snapTo - cur) * Math.sign(v || 1) < 0) snapTo += STEP * Math.sign(v || 1);
+          snapT0 = now;
+        }
+        raf = requestAnimationFrame(frame);
+      } else {
+        var t = Math.min(1, (now - snapT0) / SNAP_MS);
+        var e = 1 - Math.pow(1 - t, 3);             // easeOutCubic
+        setRot(snapFrom + (snapTo - snapFrom) * e);
+        if (t < 1){ raf = requestAnimationFrame(frame); }
+        else { finish(snapTo, segUnder(snapTo)); }
+      }
+    }
+    raf = requestAnimationFrame(frame);
+    clearTimeout(fallback);
+    fallback = setTimeout(function(){
+      if (spinning){ var base = isNaN(cur) ? 0 : cur; var to = Math.round(base / STEP) * STEP; finish(to, segUnder(to)); }
+    }, 9000);
   }
 
-  // Glide to the nearest segment from an (over-shot) raw rotation, keeping any
-  // full turns so the wheel coasts to rest rather than snapping back.
-  function landOn(raw, durSec){
-    var target = Math.round(raw / STEP) * STEP;
-    var i = (((-Math.round(target / STEP)) % COUNT) + COUNT) % COUNT;
-    curEase = durSec.toFixed(2) + 's ' + FRICTION;
-    rotation = target;
-    selectedIndex = i;
-    renderRotor();
-    renderSelection();
-  }
-
-  function spin(){
-    var turns = 3 + Math.floor(Math.random() * 3);              // 3–5 full turns
-    var raw = rotation + 360 * turns + Math.random() * 360;      // random landing
-    var dur = 2.6 + turns * 0.22 + Math.random() * 0.4;
-    landOn(raw, dur);
+  // direct ease to a known target (used for taps / slow drags)
+  function snapBare(to){
+    stopAnim();
+    var from = cur, t0 = performance.now(), dur = 420;
+    function f(now){
+      var t = Math.min(1, (now - t0) / dur);
+      var e = 1 - Math.pow(1 - t, 3);
+      setRot(from + (to - from) * e);
+      if (t < 1) raf = requestAnimationFrame(f);
+      else finish(to, segUnder(to));
+    }
+    raf = requestAnimationFrame(f);
+    clearTimeout(fallback);
+    fallback = setTimeout(function(){ if (spinning) finish(to, segUnder(to)); }, 1200);
   }
 
   // --- pointer interaction ---
   function getAngle(e){
     var r = stage.getBoundingClientRect();
-    var dx = e.clientX - (r.left + r.width/2);
-    var dy = e.clientY - (r.top + r.height/2);
-    return Math.atan2(dx, -dy) * 180 / Math.PI;
+    return Math.atan2(e.clientX - (r.left + r.width/2), -(e.clientY - (r.top + r.height/2))) * 180 / Math.PI;
   }
 
   function onDown(e){
-    var ang = getAngle(e);
-    startAng = ang;
-    startRot = rotation;
-    downSeg = ((Math.round((ang - rotation) / STEP) % COUNT) + COUNT) % COUNT;
+    if (spinning) return;
+    if (dial.contains(e.target)) return;            // let the dial button handle spin
+    stopAnim();
+    startAng = getAngle(e);
+    startRot = (cur != null) ? cur : rotation;
     moved = false;
-    dragging = true;
-    lastT = (e.timeStamp || performance.now());
-    lastRot = rotation;
-    vel = 0;
-    stage.classList.add('dragging');
+    samples = [{ a: 0, t: performance.now() }];
     try { stage.setPointerCapture(e.pointerId); } catch(_){}
+    down = true;
+    stage.classList.add('dragging');
   }
 
   function onMove(e){
-    if (!dragging) return;
+    if (!down) return;
     var delta = norm(getAngle(e) - startAng);
     if (Math.abs(delta) > 2.5) moved = true;
-    rotation = startRot + delta;
-
-    // track angular velocity (deg/ms), smoothed, so a flick can carry through
-    var now = (e.timeStamp || performance.now());
-    var dt = now - lastT;
-    if (dt > 0){
-      var inst = (rotation - lastRot) / dt;
-      vel = vel * 0.6 + inst * 0.4;
-      lastT = now;
-      lastRot = rotation;
-    }
-    renderRotor();
+    cur = startRot + delta;
+    setRot(cur);
+    samples.push({ a: delta, t: performance.now() });
+    while (samples.length > 6) samples.shift();
   }
 
   function onUp(){
-    if (!dragging) return;
-    dragging = false;
+    if (!down) return;
+    down = false;
     stage.classList.remove('dragging');
 
-    if (!moved){ selectIndex(downSeg); return; }
-
-    // A quick flick keeps spinning; a slow, deliberate drag just settles.
-    if (Math.abs(vel) > 0.12){
-      var glide = Math.max(-360 * 5, Math.min(360 * 5, vel * 380));
-      var dur = Math.min(3.0, Math.max(0.6, Math.abs(glide) / 700));
-      landOn(rotation + glide, dur);
-    } else {
-      var idx = (((Math.round(-rotation / STEP) % COUNT) + COUNT) % COUNT);
-      selectIndex(idx);
+    if (!moved){                                    // a tap — select the segment under the finger
+      var local = norm(startAng - cur);
+      var idx = ((Math.round(local / STEP) % COUNT) + COUNT) % COUNT;
+      var to = cur + norm(-idx * STEP - cur);
+      spinning = true; selectedIndex = -1; showState();
+      snapBare(to);
+      return;
     }
+    // angular velocity (deg/ms) from the tail of the drag
+    var a = samples[0], b = samples[samples.length - 1];
+    var v = (b.t - a.t > 0) ? (b.a - a.a) / (b.t - a.t) : 0;
+    v = Math.max(-3.2, Math.min(3.2, v));
+    spinning = true; selectedIndex = -1; showState();
+    if (Math.abs(v) < 0.05){                         // a slow drag, no real flick
+      snapBare(Math.round(cur / STEP) * STEP);
+    } else {
+      launch(v);
+    }
+  }
+
+  function spin(){
+    if (spinning) return;
+    spinning = true; selectedIndex = -1; showState();
+    launch(1.5 + Math.random() * 1.1);               // deg/ms — a brisk, varied flick
   }
 
   stage.addEventListener('pointerdown', onDown);
@@ -372,12 +396,11 @@
   stage.addEventListener('pointerup', onUp);
   stage.addEventListener('pointerleave', onUp);
   stage.addEventListener('pointercancel', onUp);
-  spinBtn.addEventListener('click', spin);
+  dial.addEventListener('click', spin);
 
   // --- init ---
   buildWheel();
-  renderRotor();
-  renderSelection();
+  showState();
 })();
 </script>
 </body>
